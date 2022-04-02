@@ -1,8 +1,8 @@
 {
-  "name": "Start on Heroku: Node.js",
-  "description": "A barebones Node.js app using Express 4",
-  "repository": "https://github.com/heroku/node-js-getting-started",
-  "logo": "https://cdn.rawgit.com/heroku/node-js-getting-started/main/public/node.svg",
-  "keywords": ["node", "express", "heroku"],
+  "name": "Productboard - Linear connector",
+  "description": "This component allows you to push features from Productboard to Linear and create a link between them",
+  "repository": "https://github.com/productboard/productboard-linear-connector",
+  "logo": "https://www.productboard.com/wp-content/themes/productboard/public/img/productboard-logo.svg",
+  "keywords": ["productboard", "linear", "integration", "agile"],
   "image": "heroku/nodejs"
 }
