@@ -17,7 +17,6 @@ router.get('/productboard', (req, res) => {
 
 // A button has been pushed
 router.post('/productboard', async (req, res) => {
-  console.log(JSON.stringify(req.headers))
   console.dir(req.body, { depth: null })
 
   const data = req.body.data
@@ -31,7 +30,7 @@ router.post('/productboard', async (req, res) => {
     // create issue in linear
     res.json(await apis.linkIssue(data.feature.links, data.links.connection))
   } else if (trigger === 'button.unlink') {
-    // not implemented yet in Productboard
+    await apis.unlinkIssue(data.feature.links.html, data.links.connection)
     res.json({ data: { connection: { state: 'initial' } } })
   } else {
     res.status(404).send('Unknown trigger')

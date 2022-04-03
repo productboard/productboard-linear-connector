@@ -146,6 +146,27 @@ const linkIssue = async (pbLink, connectionLink) => {
   }
 }
 
+const unlinkIssue = async(pbLink, connectionLink) => {
+  // TODO proper variables
+  const query = `query {
+    attachmentsForURL(url: "${pbLink}") {
+      nodes {
+        id
+        metadata
+      }
+    }
+  }`
+  const attachments = (await linear.client.request(query)).attachmentsForURL
+  // The call below is better typed but does not return metadata by default
+  // const attachments = await linear.attachmentsForURL(pbLink)
+  for (const attachment of attachments.nodes) {
+    if (attachment?.metadata?.connection === connectionLink) {
+      console.log("Deleting attachment", attachment.id)
+      linear.attachmentDelete(attachment.id)
+    }
+  }
+}
+
 const mapLinearState = (state) => {
   return {
     label: state.name.substring(0, 20),
@@ -154,7 +175,14 @@ const mapLinearState = (state) => {
 }
 
 const unlinkFeature = async (connectionLink) => {
-  await productboard.delete(connectionLink)
+  try {
+    await productboard.delete(connectionLink)
+  } catch (e) {
+    // The feature connection won't exist if it was Productboard unlinking that triggered the attachment delete
+    if (!e.response || e.response.status !== 404) {
+      throw e
+    }
+  }
 }
 
 const updateFeatureStatus = async (issueId, newState) => {
@@ -197,4 +225,4 @@ const updateFeatureStatus = async (issueId, newState) => {
   }
 }
 
-module.exports = { linkIssue, upsertPluginIntegration, registerWebhook, unlinkFeature, updateFeatureStatus }
+module.exports = { linkIssue, upsertPluginIntegration, registerWebhook, unlinkFeature, updateFeatureStatus, unlinkIssue }
