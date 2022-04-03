@@ -16,3 +16,8 @@
 - [ ] Update title and/or description in Linear if updated in PB
 - [ ] Unlink Productboard connection on Linear issue attachment deleted
 - [ ] Unlink Productboard connection on Linear issue deleted
+
+
+## Demo
+
+![Demo of 2-way status sync](demo.gif)
