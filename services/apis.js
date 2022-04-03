@@ -122,6 +122,8 @@ const linkIssue = async (pbLink, connectionLink) => {
     const attachmentCreate = await linear.attachmentLinkURL(issue.id, pbLink.html, { title: 'Feature in Productboard' })
     const attachment = await attachmentCreate.attachment
 
+    // We store the connection link in the attachment metadata
+    // The GraphQL doesn't expose that field in the call above, so a 2nd call is neeeded
     await linear.attachmentUpdate(attachment.id, { title: 'Feature in Productboard', metadata: { connection: connectionLink } })
 
     const { label, color } = mapLinearState(await issue.state)
@@ -175,7 +177,6 @@ const updateFeatureStatus = async (issueId, newState) => {
   const attachments = response.issue.attachments
 
   for (const a of attachments.nodes) {
-    console.log(a)
     if (a?.metadata?.connection?.startsWith('https://api.productboard.com/plugin-integrations')) {
       const { label, color } = mapLinearState(newState)
       const payload = {

@@ -59,7 +59,7 @@ router.post('/linear', async (req, res) => {
 
         // status has changed
         if (stateId && prevStateId !== stateId) {
-          console.log("Updating status", body.data.id, prevStateId, stateId)
+          console.log('Updating status', body.data.id, prevStateId, stateId)
           await apis.updateFeatureStatus(body.data.id, body.data.state)
         }
       }
