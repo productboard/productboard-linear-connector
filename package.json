@@ -7,11 +7,24 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "eslint index.js services/ && npm audit --audit-level=high"
   },
   "dependencies": {
-    "express": "^4.15.2",
-    "npm": "^8.6.0"
+    "@linear/sdk": "^1.22.0",
+    "axios": "^0.26.1",
+    "express": "^4.17.3",
+    "morgan": "^1.10.0",
+    "nearest-color": "^0.4.4",
+    "npm": "^8.6.0",
+    "turndown": "^7.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.20.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1"
   },
   "repository": {
     "type": "git",
@@ -22,5 +35,19 @@
     "linear",
     "integration"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "commonjs": true,
+      "es2021": true
+    },
+    "extends": [
+      "standard"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 12
+    },
+    "rules": {}
+  }
 }

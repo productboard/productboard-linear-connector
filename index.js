@@ -1,7 +1,11 @@
 const express = require('express')
-const path = require('path')
+
+const middleware = require('./services/middleware')
+
 const PORT = process.env.PORT || 3001
 
 express()
-  .get('/', (req, res) => res.render('pages/index'))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+  .use(require('morgan')('dev'))
+  .use(express.json())
+  .use('/', middleware)
+  .listen(PORT, () => console.log(`Listening on ${PORT}`))
