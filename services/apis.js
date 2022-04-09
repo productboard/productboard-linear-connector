@@ -59,16 +59,17 @@ const upsertPluginIntegration = async () => {
   }
 
   const integrations = await productboard.get('https://api.productboard.com/plugin-integrations')
-  const integration = integrations.data.data.find(el => el.type === identifier)
+  const matched = integrations.data.data.find(el => el.type === identifier)
 
-  if (integration) {
-    return integration
+  if (matched) {
+    return matched
   } else {
     const res = await productboard.post('https://api.productboard.com/plugin-integrations', payload)
 
     return res.data
   }
 }
+const pluginIntegration = upsertPluginIntegration()
 
 /**
  * Ensures the webhook in Linear exists
@@ -146,7 +147,7 @@ const linkIssue = async (pbLink, connectionLink) => {
   }
 }
 
-const unlinkIssue = async(pbLink, connectionLink) => {
+const unlinkIssue = async (pbLink, connectionLink) => {
   // TODO proper variables
   const query = `query {
     attachmentsForURL(url: "${pbLink}") {
@@ -161,7 +162,7 @@ const unlinkIssue = async(pbLink, connectionLink) => {
   // const attachments = await linear.attachmentsForURL(pbLink)
   for (const attachment of attachments.nodes) {
     if (attachment?.metadata?.connection === connectionLink) {
-      console.log("Deleting attachment", attachment.id)
+      console.log('Deleting attachment', attachment.id)
       linear.attachmentDelete(attachment.id)
     }
   }
@@ -174,7 +175,7 @@ const mapLinearState = (state) => {
   }
 }
 
-const unlinkFeature = async (connectionLink) => {
+const unlinkFeatureByConnection = async (connectionLink) => {
   try {
     await productboard.delete(connectionLink)
   } catch (e) {
@@ -183,6 +184,38 @@ const unlinkFeature = async (connectionLink) => {
       throw e
     }
   }
+}
+
+const unlinkFeatureByIssueId = async (id) => {
+  const issue = await linear.issue(id)
+  const connection = await findConnection(issue.url)
+  if (connection) {
+    console.log('Unlinking connection', connection.links.self)
+    await unlinkFeatureByConnection(connection.links.self)
+  }
+}
+
+const findConnection = async (targetUrl) => {
+  const initial = `https://api.productboard.com/plugin-integrations/${(await pluginIntegration).id}/connections`
+  const paginate = async (url) => {
+    const response = await productboard.get(url)
+    const body = response.data
+    console.log(body)
+
+    const connection = body.data.find(c => c?.connection?.targetUrl === targetUrl)
+
+    if (connection) {
+      console.log('Found connection for issue', targetUrl)
+      return connection
+    } else if (body.links.next) {
+      return await paginate(body.links.next)
+    } else {
+      console.log('No connection found for issue', targetUrl)
+      return connection
+    }
+  }
+
+  return await paginate(initial)
 }
 
 const updateFeatureStatus = async (issueId, newState) => {
@@ -225,4 +258,10 @@ const updateFeatureStatus = async (issueId, newState) => {
   }
 }
 
-module.exports = { linkIssue, upsertPluginIntegration, registerWebhook, unlinkFeature, updateFeatureStatus, unlinkIssue }
+module.exports = {
+  linkIssue,
+  unlinkFeatureByConnection,
+  unlinkFeatureByIssueId,
+  updateFeatureStatus,
+  unlinkIssue
+}
