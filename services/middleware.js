@@ -28,7 +28,9 @@ router.post('/productboard', async (req, res) => {
   } else if (trigger === 'button.push') {
     // create issue in linear
     console.log('[productboard] pushed new issue to linear')
-    res.json(await apis.linkIssue(data.feature.links, data.links.connection))
+    // send data early since linkIssue can take more than 5s which Productboard doesn't like
+    res.send({ data: { connection: { state: 'progress' } } })
+    await apis.linkIssue(data.feature.links, data.links.connection)
   } else if (trigger === 'button.unlink') {
     console.log('[productboard] unlinked issue in linear')
     await apis.unlinkIssue(data.feature.links.html, data.links.connection)

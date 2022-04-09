@@ -129,7 +129,7 @@ const linkIssue = async (pbLink, connectionLink) => {
 
     const { label, color } = mapLinearState(await issue.state)
 
-    return {
+    const payload = {
       data: {
         connection: {
           state: 'connected',
@@ -141,6 +141,10 @@ const linkIssue = async (pbLink, connectionLink) => {
         }
       }
     }
+
+    productboard.put(connectionLink, payload)
+
+    return payload
   } else {
     console.error(issueCreate.Error)
     throw issueCreate.Error

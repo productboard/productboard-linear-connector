@@ -11,7 +11,7 @@
 | LINEAR_TEAM_ID       | UUID of Linear.app team to create issues in. Run `JSON.parse(localStorage.getItem('userSettings')).activeTeamId` in Linear web console to fetch  |
 
 ## Todo
-- [ ] Issue linking can exceed timeout
+- [x] Issue linking can exceed timeout
 - [ ] Error handling pretty much everywhere
 - [ ] Delete Linear attachment on PB feature deleted
 - [x] Delete Linear attachment on PB connection unlinked
