@@ -1,6 +1,7 @@
 const { LinearClient } = require('@linear/sdk')
 const axios = require('axios')
 const TurndownService = require('turndown')
+const gql = require('graphql-tag')
 
 const turndown = new TurndownService()
 
@@ -152,16 +153,15 @@ const linkIssue = async (pbLink, connectionLink) => {
 }
 
 const unlinkIssue = async (pbLink, connectionLink) => {
-  // TODO proper variables
-  const query = `query {
-    attachmentsForURL(url: "${pbLink}") {
+  const query = gql`query AttachmentForURL($pbLink: String!) {
+    attachmentsForURL(url: $pbLink) {
       nodes {
         id
         metadata
       }
     }
   }`
-  const attachments = (await linear.client.request(query)).attachmentsForURL
+  const attachments = (await linear.client.request(query, { pbLink })).attachmentsForURL
   // The call below is better typed but does not return metadata by default
   // const attachments = await linear.attachmentsForURL(pbLink)
   for (const attachment of attachments.nodes) {
@@ -224,9 +224,8 @@ const findConnection = async (targetUrl) => {
 
 const updateFeatureStatus = async (issueId, newState) => {
   // the linear SDK does not return metadata on attachments by default, we need to issue our own query
-  // TODO: Use proper GraphQL variables
-  const query = `query {
-    issue(id: "${issueId}") {
+  const query = gql`query IssueWithMetadata($issueId: String!) {
+    issue(id: $issueId) {
       identifier
       url
       attachments {
@@ -237,7 +236,7 @@ const updateFeatureStatus = async (issueId, newState) => {
     }
   }`
 
-  const response = await linear.client.request(query)
+  const response = await linear.client.request(query, { issueId })
   const issue = response.issue
   const attachments = response.issue.attachments
 
