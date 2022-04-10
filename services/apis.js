@@ -79,28 +79,51 @@ const pluginIntegration = upsertPluginIntegration()
  * - listen on Attachment deletion => unlink pb connection
  */
 const registerWebhook = async () => {
-  try {
-    // linear SDK is broken here, it's asking for an invalid field on the API (teamIds)
-    // we issue a raw query instead
-    // const webhook = await linear.webhook(identifier)
-    // TODO: Use proper GrapHQL variables
-    const query = `query {
-      webhook(id: "${identifier}") {
+  const webhookUrl = baseUrl + '/linear'
+  // linear SDK is broken here, it's asking for an invalid field on the API (teamIds)
+  const query = gql`query Webhooks($cursor: String) {
+    webhooks(first: 50, after: $cursor) {
+      nodes {
         id
+        url
+        label
+        team { id }
       }
-    }`
-    const response = await linear.client.request(query)
-    console.log('Webhook found', response)
-  } catch (e) {
-    linear.webhookCreate({
-      id: identifier,
-      teamId: team,
-      url: baseUrl + '/linear',
-      label: 'Productboard integration',
-      resourceTypes: ['Issue', 'Attachment']
-    })
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
   }
+  `
+
+  const findWebhook = w => w.url === webhookUrl && w.team.id === team
+
+  let webhooks = (await linear.client.request(query, { cursor: null })).webhooks
+
+  let webhook = webhooks.nodes.find(findWebhook)
+  if (webhook) {
+    console.log("Found webhook registered in linear", webhookUrl)
+    return webhook
+  }
+
+  while (webhooks.pageInfo.hasNextPage) {
+    webhooks = await (await linear.client.request(query, { cursor: webhooks.pageInfo.endCursor })).webhooks
+    webhook = webhooks.nodes.find(findWebhook)
+    if (webhook) {
+      return webhook
+    }
+  }
+
+  console.log('Linear webhook not found, creating', webhookUrl)
+  linear.webhookCreate({
+    teamId: team,
+    url: webhookUrl,
+    label: 'Productboard integration',
+    resourceTypes: ['Issue', 'Attachment']
+  })
 }
+registerWebhook()
 
 /**
  * - Creates an issue in Linear
@@ -119,7 +142,6 @@ const linkIssue = async (pbLink, connectionLink) => {
 
   if (issueCreate.success) {
     const issue = await issueCreate.issue
-    console.log(issue)
 
     const attachmentCreate = await linear.attachmentLinkURL(issue.id, pbLink.html, { title: 'Feature in Productboard' })
     const attachment = await attachmentCreate.attachment
@@ -204,7 +226,6 @@ const findConnection = async (targetUrl) => {
   const paginate = async (url) => {
     const response = await productboard.get(url)
     const body = response.data
-    console.log(body)
 
     const connection = body.data.find(c => c?.connection?.targetUrl === targetUrl)
 
