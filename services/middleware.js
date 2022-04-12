@@ -8,13 +8,13 @@ const router = express.Router()
 // Linear: https://developers.linear.app/
 
 // Verification webhook when the plugin integration is registered
-router.get('/productboard', (req, res) => {
+router.get('/productboard*', (req, res) => {
   console.log('[productboard] received validation token')
   res.send(req.query.validationToken)
 })
 
-// A button has been pushed
-router.post('/productboard', async (req, res) => {
+// A button has been pushed, webhook from plugin integration
+router.post('/productboard/integration', async (req, res) => {
   const data = req.body.data
   const trigger = data.trigger
 
@@ -41,9 +41,19 @@ router.post('/productboard', async (req, res) => {
   }
 })
 
+// Productboard sent a webhook on feature updated/deleted
+router.post('/productboard/webhook', async (req, res) => {
+  const event = req.body.data.eventType
+
+  if (event === 'feature.deleted') {
+    await apis.unlinkIssueByFeatureId(req.body.data.id)
+  }
+
+  res.status(200).send()
+})
+
 // Linear sent a webhook an issue or attachment has been changed
 router.post('/linear', async (req, res) => {
-  console.log(req.body)
   const body = req.body
 
   console.log('[linear] received webhook', body.type, body.action)

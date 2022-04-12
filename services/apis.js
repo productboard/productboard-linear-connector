@@ -39,7 +39,7 @@ const nearestColor = require('nearest-color').from(colors)
  * and the ID is stored in memory for pairing purposes
  */
 const upsertPluginIntegration = async () => {
-  const url = '/productboard'
+  const url = baseUrl + '/productboard/integration'
 
   const payload = {
     data: {
@@ -59,16 +59,26 @@ const upsertPluginIntegration = async () => {
     }
   }
 
-  const integrations = await productboard.get('https://api.productboard.com/plugin-integrations')
-  const matched = integrations.data.data.find(el => el.type === identifier)
-
-  if (matched) {
-    return matched
-  } else {
-    const res = await productboard.post('https://api.productboard.com/plugin-integrations', payload)
-
-    return res.data
+  let integrations = (await productboard.get('https://api.productboard.com/plugin-integrations')).data
+  let integration = integrations.data.find(el => el.type === identifier)
+  if (integration) {
+    console.log('Found registered productboard plugin integration', integration.id)
+    return integration
   }
+
+  while (integrations.links.next) { // pagination
+    integrations = (await productboard.get(integrations.links.next)).data
+    integration = integrations.data.find(el => el.type === identifier)
+    if (integration) {
+      console.log('Found registered productboard plugin integration', integration.id)
+      return integration
+    }
+  }
+
+  console.log('Creating productboard plugin integration')
+  const res = await productboard.post('https://api.productboard.com/plugin-integrations', payload)
+
+  return res.data
 }
 const pluginIntegration = upsertPluginIntegration()
 
@@ -78,7 +88,7 @@ const pluginIntegration = upsertPluginIntegration()
  * - listen on Issue deletions => unlink pb connection
  * - listen on Attachment deletion => unlink pb connection
  */
-const registerWebhook = async () => {
+const registerLinearWebhook = async () => {
   const webhookUrl = baseUrl + '/linear'
   // linear SDK is broken here, it's asking for an invalid field on the API (teamIds)
   const query = gql`query Webhooks($cursor: String) {
@@ -103,7 +113,7 @@ const registerWebhook = async () => {
 
   let webhook = webhooks.nodes.find(findWebhook)
   if (webhook) {
-    console.log("Found webhook registered in linear", webhookUrl)
+    console.log('Found webhook registered in linear', webhookUrl)
     return webhook
   }
 
@@ -123,7 +133,52 @@ const registerWebhook = async () => {
     resourceTypes: ['Issue', 'Attachment']
   })
 }
-registerWebhook()
+registerLinearWebhook()
+
+/**
+ * Ensures the webhook in Linear exists
+ * - listen on Feature deleted => unlink linear issue
+ * - listen on Feature updated => update title / description
+ */
+const registerProductboardWebhook = async () => {
+  const url = baseUrl + '/productboard/webhook'
+  const name = 'Linear connector ' + team
+
+  const payload = {
+    data: {
+      name: name,
+      events: [
+        { eventType: 'feature.deleted' }
+      ],
+      notification: {
+        url: url,
+        version: 1
+      }
+    }
+  }
+
+  let integrations = (await productboard.get('https://api.productboard.com/webhooks')).data
+  let integration = integrations.data.find(el => el.name === name)
+  if (integration) {
+    console.log('Found registered productboard webhook', integration.id)
+    return integration
+  }
+
+  while (integrations.links.next) { // pagination
+    integrations = (await productboard.get(integrations.links.next)).data
+    integration = integrations.data.find(el => el.type === identifier)
+    if (integration) {
+      console.log('Found registered productboard webhook', integration.id)
+      return integration
+    }
+  }
+
+  console.log('Creating productboard feature updated/deleted webhook')
+  const res = await productboard.post('https://api.productboard.com/webhooks', payload)
+
+  return res.data
+}
+registerProductboardWebhook()
 
 /**
  * - Creates an issue in Linear
@@ -189,6 +244,32 @@ const unlinkIssue = async (pbLink, connectionLink) => {
   for (const attachment of attachments.nodes) {
     if (attachment?.metadata?.connection === connectionLink) {
       console.log('Deleting attachment', attachment.id)
+      linear.attachmentDelete(attachment.id)
+    }
+  }
+}
+
+const unlinkIssueByFeatureId = async (featureId) => {
+  const connectionLink = `https://api.productboard.com/plugin-integrations/${(await pluginIntegration).id}/connections/${featureId}`
+
+  const query = gql`query AttachmentForFeatureId($featureId: String!) {
+    attachments(filter: { url: { endsWith: $featureId } }) {
+        nodes {
+          id
+          metadata
+          issue {
+            identifier
+          }
+        }
+      }
+  }
+  `
+
+  const attachments = (await linear.client.request(query, { featureId })).attachments
+
+  for (const attachment of attachments.nodes) {
+    if (attachment?.metadata?.connection === connectionLink) {
+      console.log('Deleting attachment', attachment.id, attachment.issue.identifier)
       linear.attachmentDelete(attachment.id)
     }
   }
@@ -287,5 +368,6 @@ module.exports = {
   unlinkFeatureByConnection,
   unlinkFeatureByIssueId,
   updateFeatureStatus,
-  unlinkIssue
+  unlinkIssue,
+  unlinkIssueByFeatureId
 }

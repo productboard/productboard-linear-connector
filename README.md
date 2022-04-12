@@ -13,10 +13,10 @@
 ## Todo
 - [x] Issue linking can exceed timeout
 - [ ] Error handling pretty much everywhere
-- [ ] Delete Linear attachment on PB feature deleted
+- [x] Delete Linear attachment on PB feature deleted
 - [x] Delete Linear attachment on PB connection unlinked
 - [ ] Update title and/or description in Linear if updated in PB
-- [ ] Unlink Productboard connection on Linear issue attachment deleted
+- [x] Unlink Productboard connection on Linear issue attachment deleted
 - [x] Unlink Productboard connection on Linear issue deleted
 - [ ] Restore Productboard connection on restoring Linear issue from Trash
 
