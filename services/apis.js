@@ -17,7 +17,7 @@ const productboard = axios.create({
   }
 })
 
-const baseUrl = 'https://pbvv.ngrok.io'
+const baseUrl = process.env.BASE_URL
 const identifier = 'com.productboard.community.linear.' + team
 
 // https://nucleus.productboard.net/components/?path=/story/foundation-color-status-color--page

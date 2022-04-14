@@ -9,6 +9,7 @@
 | LINEAR_API_KEY       | Personal API token from Linear.app                                                                                                               |
 | PRODUCTBOARD_API_KEY | API Key from Productboard settings                                                                                                               |
 | LINEAR_TEAM_ID       | UUID of Linear.app team to create issues in. Run `JSON.parse(localStorage.getItem('userSettings')).activeTeamId` in Linear web console to fetch  |
+| BASE_URL             | URL where this integration can be found, including protocol, excluding trailing slash. e.g. `https://pblinear.herokuapp.com` |
 
 ## Todo
 - [ ] Update title and/or description in Linear if updated in PB
