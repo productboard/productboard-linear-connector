@@ -1,5 +1,7 @@
 # Productboard - Linear connector
 
+> Caution: the middleware is provided as-is without technical support
+
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 ## Configuration
